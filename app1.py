@@ -17,8 +17,8 @@ for x in range(8):
 app = Flask(__name__)
 
 #DB configurations
-DATABASE = 'E:/SJSU/CMPE-272/CMPE272_PMS_Inprogress/sqlite.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///E:/SJSU/CMPE-272/CMPE272_PMS_Inprogress/sqlite.db'
+DATABASE = 'sqlite.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sqlite.db'
 app.config['SECRET_KEY'] = 'secret'
 db = SQLAlchemy(app)
 doctor= db.Table('Doctor', db.metadata, autoload=True, autoload_with=db.engine)
