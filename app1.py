@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import sqlite3
 from flask_oidc import OpenIDConnect
-from okta import UsersClient
+from okta.client import Client as UsersClient
 from flask_mail import Message,Mail
 
 #generating 7 days from now.
@@ -17,8 +17,8 @@ for x in range(8):
 app = Flask(__name__)
 
 #DB configurations
-DATABASE = '/Users/avinash/Downloads/sqlite.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/avinash/Downloads/sqlite.db'
+DATABASE = 'E:/SJSU/CMPE-272/CMPE272_PMS_Inprogress/sqlite.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///E:/SJSU/CMPE-272/CMPE272_PMS_Inprogress/sqlite.db'
 app.config['SECRET_KEY'] = 'secret'
 db = SQLAlchemy(app)
 doctor= db.Table('Doctor', db.metadata, autoload=True, autoload_with=db.engine)
@@ -34,7 +34,11 @@ app.config["OIDC_SCOPES"] = ["openid", "email", "profile"]
 app.secret_key = "0averylongrandomstring"
 app.config["OIDC_ID_TOKEN_COOKIE_NAME"] = "oidc_token"
 oidc = OpenIDConnect(app)
-okta_client = UsersClient("https://dev-02149256.okta.com","009hEG5Bb1c3hHbrhppgzCCaAefPINuNzQ4ckQRXwk")
+client_config = {
+                 "orgUrl": "https://dev-02149256.okta.com",
+                 "token": "009hEG5Bb1c3hHbrhppgzCCaAefPINuNzQ4ckQRXwk" 
+                 }
+okta_client = UsersClient(client_config)
 
 #gmail config
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -235,6 +239,19 @@ def update_profile():
             cur.execute(query)
         flash('Updates was successful')
         return redirect(url_for('profile'))
+
+
+#doctor details
+@app.route('/view_doctor')
+def view_doctor():
+    with sqlite3.connect(DATABASE) as con:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        query="with temp as (SELECT doctor_id, avg(ratings) as average_ratings FROM doctor_ratings GROUP by doctor_id) select Doctor.first_name|| ' ' || Doctor.last_name as doctor_name,temp.average_ratings, doctor_Specilization.specilization from temp inner join doctor_Specilization on Doctor.specilization=doctor_Specilization.id inner join Doctor on temp.doctor_id=Doctor.id order by average_ratings desc;"
+        cur.execute(query)
+        rows = cur.fetchall()
+
+    return render_template('view_doctor.html', value=rows)
 
 #main function, run the app
 if __name__ == '__main__':
